@@ -15,6 +15,10 @@ Supported gamemodes:
 7. ARENA
 8. MEDIEVAL
 
+WARNING:
+ctf_2fort has a broken navmesh (even if regenerated)
+see included fixed .nav file!
+
 # OLD
 Requires PathFollower & tf2.pets gamedata
 
