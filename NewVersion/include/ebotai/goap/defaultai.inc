@@ -741,6 +741,16 @@ stock void ObjectiveMovement(const int client)
 			SelectObjective(client);
 		else
 		{
+			
+			
+			/* 	
+			TFTeam_Unassigned = 0,
+			TFTeam_Spectator = 1,
+			TFTeam_Red = 2,
+			TFTeam_Blue = 3  
+			*/
+			
+			
 			int flag;
 			while ((flag = FindEntityByClassname(flag, "item_teamflag")) != INVALID_ENT_REFERENCE)
 			{
@@ -748,47 +758,99 @@ stock void ObjectiveMovement(const int client)
 				{
 					if (GetEntProp(flag, Prop_Send, "m_nFlagStatus") == 1)
 					{
-						if (!TF2_HasTheFlag(client))
-						{
+						
+						// ************************
+						// A flag has been stolen!
+						// ************************
+						//PrintToChat(client,"[AFK][DEBUG] A flag has been stolen!");
+						
+						
+						new bool:HasTheFlag = DoIHaveTheFlag(client);
+						
+						
+						if (HasTheFlag == false)
+						{	
+					
+							// ************************
+							// Someone else is carrying the flag!
+							// ************************
+							//PrintToChat(client,"[AFK][DEBUG] Someone else is carrying the flag!");
+							
+							
 							int flag2;
 							while ((flag2 = FindEntityByClassname(flag2, "item_teamflag")) != INVALID_ENT_REFERENCE)
 							{
 								if (IsValidEntity(flag2) && m_team[client] == GetTeamNumber(flag2))
 								{
 									if (GetEntProp(flag2, Prop_Send, "m_nFlagStatus") == 1) // did someone is picked our flag? chase that guy.
+									{
+										//PrintToChat(client,"[AFK][DEBUG] Pursuing flag stealer.");
 										FollowPath(client, GetOrigin(flag2));
+									}
 									else // go to nearest enemy
 									{
 										int enemy = FindNearestEnemy(client);
 										if (IsValidClient(enemy))
+										{
+											//PrintToChat(client,"[AFK][DEBUG] Finding closest enemy!");
 											FollowPath(client, GetOrigin(enemy));
+										}
 										else if (GetVectorDistance(GetOrigin(client), GetOrigin(flag), true) > Squared(300)) // cover our flag
+										{
+											//PrintToChat(client,"[AFK][DEBUG] Covering the flag!");
 											FollowPath(client, GetOrigin(flag));
+										}
 									}
 								}
 							}
 						}
-						else // go to flag capture area
-						{	
+						else if (HasTheFlag == true)
+						{
+							
+							// ************************
+							// I AM carrying the flag!! - Go back to our base to cap it!
+							// ************************
+							//PrintToChat(client,"[AFK][DEBUG] I am carrying the flag!! - Go back to our base to cap it!");
+
+							
 							if (m_team[client] == 2) {
+								//PrintToChat(client,"[AFK][DEBUG] Going back to RED base to cap my intel!");
 								m_goalPosition[client] = m_redFlagCapPoint;
 							}
 							else if (m_team[client] == 3) {
+								//PrintToChat(client,"[AFK][DEBUG] Going back to BLU base to cap my intel!");
 								m_goalPosition[client] = m_bluFlagCapPoint;
 							}
+							
+						}
+						else
+						{
+							
+							PrintToChat(client,"[AFK][DEBUG] Unknown error! Please type /afk and notify an admin.");
 							
 						}
 					}
 					else
 					{
 						
+						// ************************
+						// The intel briefcase is available!
+						// ************************
+						//PrintToChat(client,"[AFK][DEBUG] The intel briefcase is available!");
+						
+						
+						m_team[client] = GetClientTeam(client);
+						
 						if (m_team[client] == 2) {
+							//PrintToChat(client,"[AFK][DEBUG] I am on RED. Let's go to BLU intel!");
 							m_goalPosition[client] = m_bluFlagCapPoint;
 						}
 						else if (m_team[client] == 3) {
+							//PrintToChat(client,"[AFK][DEBUG] I am on BLU. Let's go to RED intel!");
 							m_goalPosition[client] = m_redFlagCapPoint;
 						}
-
+						
+						//PrintToChat(client,"[AFK][DEBUG] Following path: Intel");
 						FollowPath(client, GetOrigin(flag));
 					}
 				}
@@ -796,25 +858,34 @@ stock void ObjectiveMovement(const int client)
 		}
 	}
 	else if (isAD || isCP)
+	{
+		//PrintToChatAll("[AFK][DEBUG] Goal: status C");
 		FollowPath(client, m_goalPosition[client], -1, m_goalIndex[client]);
+	}
 	else if (m_hasWaypoints || m_hasNavpoints)
 	{
+		//PrintToChatAll("[AFK][DEBUG] Goal: entity(flag) has waypoints");
 		FollowPath(client, m_goalPosition[client], -1, m_goalIndex[client]);
 		if (m_isSlowThink[client])
 			SelectObjective(client);
 	}
-	else if (IsValidEntity(m_goalEntity[client]))
-	{
-		m_goalPosition[client] = GetOrigin(m_goalEntity[client]);
-		FollowPath(client, m_goalPosition[client]);
-	}
 }
 
-stock void NavMeshControlPoint(const int client)
+
+
+
+stock bool:DoIHaveTheFlag(client)
 {
-	if (!m_isSlowThink[client])
-		return;
+    new ent = -1;
+    while ((ent = FindEntityByClassname(ent, "item_teamflag")) != -1)
+    {
+        if (GetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity") == client) {
+			
+			//PrintToChatAll("[AFK][DEBUG][STOCKS] You ARE carrying the flag.");
+            return true;
+		}
+    }
 	
-	m_goalEntity[client] = GetNearestEnemyControlPoint(client);
-	m_goalPosition[client] = GetOrigin(m_goalEntity[client]);
+	//PrintToChatAll("[AFK][DEBUG][STOCKS] You are not carrying the flag.");
+    return false;
 }
