@@ -768,7 +768,7 @@ stock void ObjectiveMovement(const int client)
 						new bool:HasTheFlag = DoIHaveTheFlag(client);
 						
 						
-						if (HasTheFlag == false)
+						if (!HasTheFlag)
 						{	
 					
 							// ************************
@@ -782,7 +782,7 @@ stock void ObjectiveMovement(const int client)
 							{
 								if (IsValidEntity(flag2) && m_team[client] == GetTeamNumber(flag2))
 								{
-									if (GetEntProp(flag2, Prop_Send, "m_nFlagStatus") == 1) // did someone is picked our flag? chase that guy.
+									if (GetEntProp(flag2, Prop_Send, "m_nFlagStatus") == 1) // did someone pick up our flag? chase him!
 									{
 										//PrintToChat(client,"[AFK][DEBUG] Pursuing flag stealer.");
 										FollowPath(client, GetOrigin(flag2));
@@ -804,7 +804,7 @@ stock void ObjectiveMovement(const int client)
 								}
 							}
 						}
-						else if (HasTheFlag == true)
+						else if (HasTheFlag)
 						{
 							
 							// ************************
